@@ -36,6 +36,11 @@ class ReLu(ly.Layer):
 		for i in xrange(size[0]):
 			for j in xrange(size[1]):
 				self.y[i,j] = max(x[i,j], x[i,j] * self.alpha)
+
+		# print self.x
+		# print self.y
+		# print '\n'
+
 		return self.y
 
 
@@ -55,7 +60,7 @@ class ReLu(ly.Layer):
 
 
 
-	def update(learning_rate):
+	def update(self,learning_rate):
 		pass
 
 

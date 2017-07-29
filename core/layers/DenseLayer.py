@@ -80,6 +80,11 @@ class DenseLayer(ly.Layer):
 
 		self.y = self.x.dot(self.w)
 
+		# print self.x
+		# print '\n'
+		# print self.y
+		# print '\n\n\n\n\n\n\n'
+
 		return self.y
 
 
@@ -94,7 +99,7 @@ class DenseLayer(ly.Layer):
 		self.dldy = dldy
 		self.dldx = dldy.dot(self.w.T)
 		self.dw = self.x.T.dot(dldy)
-		return self.dldx
+		return self.dldx[:,:-1]
 
 
 	def update(self,learning_rate):

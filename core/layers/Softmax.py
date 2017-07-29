@@ -1,7 +1,7 @@
-import numpy as numpy
+import numpy as np
 import Layer as ly
 
-class SoftmaxLoss(ly.Layer, ly.LossCriteria):
+class Softmax(ly.Layer, ly.LossCriteria):
 	'''
 	Softmax Loss layer, a bit different from the other layers in that
 	it is the last layer of the frame and has an additional function
@@ -9,7 +9,8 @@ class SoftmaxLoss(ly.Layer, ly.LossCriteria):
 
 	Parameters:
 		x: input, (N, D)
-		y: output/prediction, (N, 1)
+		y: output/probability, (N, D)
+		pred: prediction, (N, 1)
 		loss: average scalar loss
 		dldx: downgoing gradient (N, D)
 		
@@ -17,13 +18,16 @@ class SoftmaxLoss(ly.Layer, ly.LossCriteria):
 	def __init___(self):
 		self.x = None
 		self.y = None
+		self.pred = None
 		self.loss = None
+		self.dldx = None
 
 	def init_size(self, size):
 		self.x = np.zeros(size)
 		self.dldx = np.zeros(size)
-		self.y = np.zeros((size[0], 1))
-		self.loss = np.zeros((size[0], 1))
+		self.pred = np.zeros((size[0], 1))
+		self.y = np.zeros(size)
+		self.loss = 0
 		return (size[0], 1)
 
 	def getLoss(self, y_true):
@@ -31,6 +35,8 @@ class SoftmaxLoss(ly.Layer, ly.LossCriteria):
 		Given the expected output of the network, compute the loss
 		'''
 		N, D = self.x.shape
+		#print self.y
+		#print y_true
 		self.loss = -np.sum(np.log(self.y[np.arange(N), y_true])) / N
 		self.dldx = self.y[:]
 		self.dldx[np.arange(N), y_true] -= 1
@@ -45,12 +51,15 @@ class SoftmaxLoss(ly.Layer, ly.LossCriteria):
 		'''
 		assert x.shape==self.x.shape, \
 		'Incompatible shape of x';
+
 		self.x = x
 		
 		self.y = np.exp(x - np.max(x, axis=1, keepdims=True))
 		self.y /= np.sum(self.y, axis=1, keepdims=True)
 
+		self.pred = np.argmax(self.y, axis=1)
 
+		return self.pred
 
 
 	def backward(self, dldy, param):
@@ -64,5 +73,34 @@ class SoftmaxLoss(ly.Layer, ly.LossCriteria):
 	def update(self, learning_rate):
 		pass
 
+	def __str__(self):
+		s = ''
 
-		
+		s += '\nx:\n' + str(self.x) + '\n\n'
+		s += '\ny:\n' + str(self.y) + '\n\n'
+		s += '\nloss:\n' + str(self.loss) + '\n\n'
+		s += '\ndldx:\n' + str(self.dldx) + '\n\n'
+		s += '\npred:\n' + str(self.pred) + '\n\n'
+
+		return s
+
+
+# Testing
+if __name__=='__main__':
+	l = SoftmaxLoss()
+
+	l.init_size((2,3))
+	print l
+
+	y = l.forward(np.array([[2,3,4],[6,2,5]]),{})
+	print y
+	print l
+
+	loss = l.getLoss(np.array([2,2]))
+	print loss
+	print l
+
+
+
+
+
