@@ -29,6 +29,10 @@ class Layer(object):
 		# return the out size
 		raise NotImplementedError("Function init_size not implemented")
 
+	def get_kernel(self):
+		# Return the kernel of the layer, None if there isn't any
+		raise NotImplementedError("Function get_kernel not implemented")
+
 class LossCriteria(object):
 	# Superclass for the loss layer
 	def getLoss(self, y_true):

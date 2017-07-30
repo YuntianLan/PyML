@@ -73,6 +73,9 @@ class Softmax(ly.Layer, ly.LossCriteria):
 	def update(self, learning_rate):
 		pass
 
+	def get_kernel(self):
+		return None
+
 	def __str__(self):
 		s = ''
 

@@ -63,6 +63,9 @@ class ReLu(ly.Layer):
 	def update(self,learning_rate):
 		pass
 
+	def get_kernel(self):
+		return None
+
 
 	def __str__(self):
 		s = ''

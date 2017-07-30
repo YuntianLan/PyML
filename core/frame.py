@@ -60,6 +60,7 @@ class frame(object):
 				lr_rule        =   'constant'
 				update_rule    =   'sgd'
 				loss_func      =   'softmax'
+				reg 		   =   1e-3
 		'''
 		self.layers = layers   # Last element is loss layer
 		self.x_train = data['x_train']
@@ -70,6 +71,7 @@ class frame(object):
 		self.learning_rate = args.get('learning_rate',3e-3)
 		self.batch_size = args.get('batch_size',50)
 		self.epoch = args.get('epoch',10)
+		self.reg = args.get('reg',1e-3)
 
 		# For now only does constant learning rate,
 		# sgd gradient update, softmax loss function,
@@ -96,6 +98,8 @@ class frame(object):
 		print '\nInitialization Complete'
 
 	def check_acc(self, y1, y2):
+		# print y1.shape
+		# print y2.shape
 		assert y1.shape==y2.shape, 'Incompatible input'
 		return len(filter(lambda x: abs(x)<1e-4, y1 - y2))/float(len(y1))
 
@@ -111,20 +115,36 @@ class frame(object):
 
 
 		N = self.y_val.shape[0]
+		run = num / self.batch_size + ((num / self.batch_size)!=0)
 		idx = np.random.choice(N, num)
 		x_test = self.x_val[idx]
 		y_test = self.y_val[idx]
 
-		for l in self.layers:
-			x_test = l.forward(x_test,param)
+		running_acc, running_loss = [], []
 
-		return self.check_acc(x_test,y_test), self.layers[-1].getLoss(y_test)
+		for i in xrange(run-1):
+			start = i * self.batch_size
+			#print (start, start + self.batch_size)
+			x_temp = x_test[start: start + self.batch_size]
+			y_temp = y_test[start: start + self.batch_size]
+			for l in self.layers:
+				x_temp = l.forward(x_temp,param)
+			running_acc.append(self.check_acc(x_temp,y_temp))
+			curr_loss = self.layers[-1].getLoss(y_temp)
+			
+			for l in self.layers:
+					w = l.get_kernel()
+					if not w is None:
+						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+			running_loss.append(curr_loss)
+		
+		return sum(running_acc) / run, sum(running_loss) / run
 
 
 
 
 
-	def train(self, verbose=0, gap=100, debug=0):
+	def train(self, verbose=0, gap=100, debug=0, val_num=None):
 		'''
 		Train the frame
 
@@ -132,7 +152,8 @@ class frame(object):
 		gap: will print every gap number of batches
 
 		'''
-		param = {'mode':'train'}
+		param = {'mode':'train',}
+		if not val_num: val_num = self.batch_size
 
 		train_acc, val_acc, train_loss, val_loss = [],[],[],[]
 
@@ -143,10 +164,11 @@ class frame(object):
 				print 'Epoch %d / %d:' % (ep + 1, self.epoch)
 
 			for bt in xrange(num_batch):
-				idx = bt * self.batch_size
 
-				x_curr = self.x_train[idx:idx + self.batch_size]
-				y_curr = self.y_train[idx:idx + self.batch_size]
+				idx = np.random.choice(self.x_train.shape[0], self.batch_size)
+
+				x_curr = self.x_train[idx]
+				y_curr = self.y_train[idx]
 
 				if bt==ep==0 and debug:
 					print x_curr
@@ -165,6 +187,11 @@ class frame(object):
 
 				curr_acc = self.check_acc(x_curr, y_curr)
 				curr_loss = self.layers[-1].getLoss(y_curr)
+				for l in self.layers:
+					w = l.get_kernel()
+					if not w is None:
+						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+
 				
 				if bt % gap==0:
 					train_acc.append(curr_acc)
@@ -184,12 +211,13 @@ class frame(object):
 					self.layers[-i].update(self.learning_rate)
 
 				if bt % gap==0:
-					curr_val_acc, curr_val_loss = self.test_accu_loss(self.batch_size)
+					curr_val_acc, curr_val_loss = self.test_accu_loss(val_num)
 					val_acc.append(curr_val_acc)
 					val_loss.append(curr_val_loss)
-					if verbose>0:
+					if verbose>1:
 						print 'Validation accuracy: %f' % curr_val_acc
 						print 'Validation loss: %f' % curr_val_loss
+
 
 		return train_acc, val_acc, train_loss, val_loss
 
@@ -214,61 +242,4 @@ class frame(object):
 		return s
 
 if __name__=='__main__':
-	layers = [
-		DenseLayer(100,scale=1e-2),
-		ReLu(),
-		DenseLayer(100,scale=1e-2),
-		ReLu(),
-		DenseLayer(10,scale=1e-2),
-		Softmax()
-	]
-
-	x, y = get_mnist_data('../data/mnist/mnist_train.csv',40000)
-
-	data = {
-		'x_train': x[:32000],
-		'y_train': y[:32000],
-		'x_val':   x[32000:],
-		'y_val':   y[32000:]
-	}
-
-	args = {'epoch':3, 'batch_size':50}
-
-	fm = frame(layers, data, args)
-
-	train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=50,debug=0)
-
-	# print len(train_acc)
-
-	plt.subplot(411)
-	plt.plot(range(len(train_loss)),train_loss)
-	plt.title('Training Loss')
-
-	plt.subplot(412)
-	plt.plot(range(len(train_acc)),train_acc)
-	plt.title('Train Accuracy')
-
-	plt.subplot(413)
-	plt.plot(range(len(val_loss)),val_loss)
-	plt.title('Validation Loss')
-
-	plt.subplot(414)
-	plt.plot(range(len(val_acc)),val_acc)
-	plt.title('Validation Accuracy')
-
-	plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	pass

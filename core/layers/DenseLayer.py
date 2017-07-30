@@ -23,7 +23,7 @@ class DenseLayer(ly.Layer):
 
 	TODO: should we support 3D and higher dimentional input?
 	'''
-	def __init__(self,out_dim,init_type='Normal',scale=1):
+	def __init__(self,out_dim,init_type='Normal',scale=2e-2):
 		'''
 		out_dim: number of dimensions each output vector has
 		init_type: 'Normal', 'Random'
@@ -59,6 +59,7 @@ class DenseLayer(ly.Layer):
 
 		self.w_size = (inter_size,self.out_dim)
 		self.w = self.init_func(inter_size,self.out_dim) * self.scale
+		self.w[-1] = 0
 
 		return (bt_num,self.out_dim)
 
@@ -96,14 +97,24 @@ class DenseLayer(ly.Layer):
 			   dldy.shape[1]==self.out_dim,\
 			   'Imcompatible dldy size'
 		
+		reg = param.get('reg',1e-3)
 		self.dldy = dldy
 		self.dldx = dldy.dot(self.w.T)
+		
 		self.dw = self.x.T.dot(dldy)
+		temp = self.w[:]
+		temp[-1] = 0
+		self.dw += reg * temp
+
 		return self.dldx[:,:-1]
 
 
 	def update(self,learning_rate):
 		self.w -= self.dw * learning_rate
+
+
+	def get_kernel(self):
+		return self.w
 
 
 	def __str__(self):
