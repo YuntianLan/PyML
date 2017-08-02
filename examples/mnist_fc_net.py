@@ -33,7 +33,7 @@ data = {
 }
 
 
-args = {'epoch':5, 'batch_size':50}
+args = {'epoch':3, 'batch_size':50}
 
 fm = frame(layers, data, args)
 

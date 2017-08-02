@@ -59,6 +59,13 @@ class DenseLayer(ly.Layer):
 
 		self.w_size = (inter_size,self.out_dim)
 		self.w = self.init_func(inter_size,self.out_dim) * self.scale
+		# self.w = 
+		# array([[ 0.00508342,  0.00767761],
+		#        [-0.00584968, -0.03521381],
+		#        [-0.02020122,  0.00259685],
+		#        [-0.00726217,  0.01616623],
+		#        [-0.01109735, -0.0225348 ],
+		#        [ 0.        ,  0.        ]])
 		self.w[-1] = 0
 
 		return (bt_num,self.out_dim)
@@ -105,6 +112,11 @@ class DenseLayer(ly.Layer):
 		temp = self.w[:]
 		temp[-1] = 0
 		self.dw += reg * temp
+
+		if param.get('debug',0):
+			print 'dw:'
+			print self.dw
+			print '\n'
 
 		return self.dldx[:,:-1]
 

@@ -56,6 +56,8 @@ class ReLu(ly.Layer):
 					self.dldx[i,j] = self.alpha * dldy[i,j]
 				else:
 					self.dldx[i,j] = dldy[i,j]
+
+
 		return self.dldx
 
 

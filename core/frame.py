@@ -61,6 +61,7 @@ class frame(object):
 				update_rule    =   'sgd'
 				loss_func      =   'softmax'
 				reg 		   =   1e-3
+				debug 		   =   0
 		'''
 		self.layers = layers   # Last element is loss layer
 		self.x_train = data['x_train']
@@ -72,6 +73,7 @@ class frame(object):
 		self.batch_size = args.get('batch_size',50)
 		self.epoch = args.get('epoch',10)
 		self.reg = args.get('reg',1e-3)
+		self.debug = args.get('debug',0)
 
 		# For now only does constant learning rate,
 		# sgd gradient update, softmax loss function,
@@ -95,6 +97,8 @@ class frame(object):
 			all_size.append(size)
 			size = l.init_size(size)
 		all_size.append(size)
+		
+		print 'self.reg:' + str(self.reg)
 		print '\nInitialization Complete'
 
 	def check_acc(self, y1, y2):
@@ -115,7 +119,8 @@ class frame(object):
 
 
 		N = self.y_val.shape[0]
-		run = num / self.batch_size + ((num / self.batch_size)!=0)
+		run = num / self.batch_size + ((num % self.batch_size)!=0)
+		#print "run: %d" % run
 		idx = np.random.choice(N, num)
 		x_test = self.x_val[idx]
 		y_test = self.y_val[idx]
@@ -144,15 +149,16 @@ class frame(object):
 
 
 
-	def train(self, verbose=0, gap=100, debug=0, val_num=None):
+	def train(self, verbose=0, gap=100, val_num=None):
 		'''
 		Train the frame
 
 		verbose: 0-3, level of printing the training process will do
 		gap: will print every gap number of batches
+		val_num: number of examples for every test
 
 		'''
-		param = {'mode':'train',}
+		param = {'mode':'train','debug':self.debug}
 		if not val_num: val_num = self.batch_size
 
 		train_acc, val_acc, train_loss, val_loss = [],[],[],[]
@@ -166,21 +172,19 @@ class frame(object):
 			for bt in xrange(num_batch):
 
 				idx = np.random.choice(self.x_train.shape[0], self.batch_size)
-
 				x_curr = self.x_train[idx]
 				y_curr = self.y_train[idx]
 
-				if bt==ep==0 and debug:
+				if self.debug:
+					print 'input for layer 0:'
 					print x_curr
-					print np.count_nonzero(x_curr[0])
-					print np.count_nonzero(x_curr[1])
-					print np.count_nonzero(x_curr[2])
-					print y_curr
 					print '\n'
 
-				for l in self.layers:
+				for i in xrange(len(self.layers)):
+					l = self.layers[i]
 					x_curr = l.forward(x_curr,param)
-					if bt==ep==0 and debug:
+					if bt==ep==0 and self.debug:
+						print 'out from layer %d' % i
 						print x_curr
 						print '\n'
 				# x_curr = prediction for current batch
@@ -191,7 +195,8 @@ class frame(object):
 					w = l.get_kernel()
 					if not w is None:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
-
+				if self.debug:
+					print 'curr_loss: %f' % curr_loss
 				
 				if bt % gap==0:
 					train_acc.append(curr_acc)
@@ -206,6 +211,8 @@ class frame(object):
 				dldy = None
 				for i in range(1,len(self.layers)+1):
 					dldy = self.layers[-i].backward(dldy,param)
+					if self.debug:
+						print 'dldy for layer %d:' % (len(self.layers)-1)
 					# So the update only works for constant lr,
 					# what if we add changing lrs in the future?
 					self.layers[-i].update(self.learning_rate)
