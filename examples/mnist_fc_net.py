@@ -15,11 +15,13 @@ sys.path.pop(-1)
 # Epoch: 5; Batch size: 50
 
 layers = [
-	DenseLayer(100,scale=1e-2),
+	DenseLayer(100,scale=2e-2),
 	ReLu(),
-	DenseLayer(100,scale=1e-2),
+	DenseLayer(100,scale=2e-2),
 	ReLu(),
-	DenseLayer(10,scale=1e-2),
+	# DenseLayer(100,scale=2e-2),
+	# ReLu(),
+	DenseLayer(10,scale=2e-2),
 	Softmax()
 ]
 
@@ -33,7 +35,7 @@ data = {
 }
 
 
-args = {'epoch':3, 'batch_size':50}
+args = {'epoch':3, 'batch_size':50, 'reg':5e-2}
 
 fm = frame(layers, data, args)
 

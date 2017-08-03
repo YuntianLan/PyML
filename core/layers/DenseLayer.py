@@ -59,6 +59,7 @@ class DenseLayer(ly.Layer):
 
 		self.w_size = (inter_size,self.out_dim)
 		self.w = self.init_func(inter_size,self.out_dim) * self.scale
+
 		# self.w = 
 		# array([[ 0.00508342,  0.00767761],
 		#        [-0.00584968, -0.03521381],

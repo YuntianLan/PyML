@@ -92,13 +92,11 @@ class frame(object):
 
 		size = (self.batch_size,) + self.x_train[0].shape
 		all_size = []
-		# print size ######## DEBUG ########
 		for l in layers:
 			all_size.append(size)
 			size = l.init_size(size)
 		all_size.append(size)
 		
-		print 'self.reg:' + str(self.reg)
 		print '\nInitialization Complete'
 
 	def check_acc(self, y1, y2):
@@ -115,32 +113,56 @@ class frame(object):
 
 		TODO: maybe support multiple ways of subsampling?
 		'''
-		param = {'mode':'test'}
+		param = {'mode':'test','debug':self.debug,'reg':self.reg}
 
 
 		N = self.y_val.shape[0]
 		run = num / self.batch_size + ((num % self.batch_size)!=0)
+		#print 'run:' + str(run)
 		#print "run: %d" % run
 		idx = np.random.choice(N, num)
 		x_test = self.x_val[idx]
 		y_test = self.y_val[idx]
 
+		
+
 		running_acc, running_loss = [], []
 
-		for i in xrange(run-1):
+		for i in xrange(run):
 			start = i * self.batch_size
 			#print (start, start + self.batch_size)
 			x_temp = x_test[start: start + self.batch_size]
 			y_temp = y_test[start: start + self.batch_size]
+
+			######################################################
+			# x_temp = np.array([[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
+			# 		[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
+			# 		[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395]])
+			# y_temp = np.array([0,0,0])
+			# print '@@@@@@ validation @@@@@@'
+			# print x_temp
+			######################################################
+
 			for l in self.layers:
 				x_temp = l.forward(x_temp,param)
+				#print x_temp
+			#print '@@@@@@ validation @@@@@@'
+
+
 			running_acc.append(self.check_acc(x_temp,y_temp))
 			curr_loss = self.layers[-1].getLoss(y_temp)
+			######################################################
+			#print 'val_loss:' + str(curr_loss) + '\n'
+			######################################################
 			
 			for l in self.layers:
 					w = l.get_kernel()
 					if not w is None:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+						######################################################
+						#print w
+						#print 'val_loss:' + str(curr_loss)
+						######################################################
 			running_loss.append(curr_loss)
 		
 		return sum(running_acc) / run, sum(running_loss) / run
@@ -158,7 +180,7 @@ class frame(object):
 		val_num: number of examples for every test
 
 		'''
-		param = {'mode':'train','debug':self.debug}
+		param = {'mode':'train','debug':self.debug,'reg':self.reg}
 		if not val_num: val_num = self.batch_size
 
 		train_acc, val_acc, train_loss, val_loss = [],[],[],[]
@@ -174,6 +196,11 @@ class frame(object):
 				idx = np.random.choice(self.x_train.shape[0], self.batch_size)
 				x_curr = self.x_train[idx]
 				y_curr = self.y_train[idx]
+
+				################################################
+				#x_curr = self.x_train[bt*self.batch_size:bt*self.batch_size+self.batch_size]
+				#y_curr = self.y_train[bt*self.batch_size:bt*self.batch_size+self.batch_size]
+				################################################
 
 				if self.debug:
 					print 'input for layer 0:'
@@ -191,10 +218,16 @@ class frame(object):
 
 				curr_acc = self.check_acc(x_curr, y_curr)
 				curr_loss = self.layers[-1].getLoss(y_curr)
+				################################################
+				#print 'loss loss loss loss:' + str(curr_loss)
+				################################################
 				for l in self.layers:
 					w = l.get_kernel()
 					if not w is None:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+						################################################
+						#print 'loss loss loss loss:' + str(curr_loss)
+						################################################
 				if self.debug:
 					print 'curr_loss: %f' % curr_loss
 				
@@ -212,7 +245,8 @@ class frame(object):
 				for i in range(1,len(self.layers)+1):
 					dldy = self.layers[-i].backward(dldy,param)
 					if self.debug:
-						print 'dldy for layer %d:' % (len(self.layers)-1)
+						print 'dldy for layer %d:' % (len(self.layers)-i)
+						print dldy
 					# So the update only works for constant lr,
 					# what if we add changing lrs in the future?
 					self.layers[-i].update(self.learning_rate)

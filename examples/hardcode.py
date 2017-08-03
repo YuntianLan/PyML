@@ -12,13 +12,13 @@ sys.path.pop(-1)
 
 # x1 -> w1 -> x2
 
-epoch, batch_size, learning_rate, reg = 3, 50, 3e-3, 1e-3
+epoch, batch_size, learning_rate, reg = 1, 3, 3e-1, 1e-1
 verbose = 1
 gap = 30
 
-x, y = get_mnist_data('../data/mnist/mnist_train.csv',40000)
+# x, y = get_mnist_data('../data/mnist/mnist_train.csv',40000)
 
-x_t, y_t, x_v, y_v = x[:32000], y[:32000], x[32000:], y[32000:]
+# x_t, y_t, x_v, y_v = x[:32000], y[:32000], x[32000:], y[32000:]
 # data = {
 # 	'x_train': x[:32000],
 # 	'y_train': y[:32000],
@@ -28,13 +28,15 @@ x_t, y_t, x_v, y_v = x[:32000], y[:32000], x[32000:], y[32000:]
 
 global w1, w2, dw1, dw2
 
-w1 = np.random.randn(785,100) * 1e-2
+w1 = np.random.randn(6,2) * 1
+w1 = np.ones((6,2))
 w1[-1] = 0
-dw1 = np.zeros((785,100))
+dw1 = np.zeros((6,2))
 
-w2 = np.random.randn(101,10) * 1e-2
+w2 = np.random.randn(3,2) * 1
+w2 = np.ones((3,2))
 w2[-1] = 0
-dw2 = np.zeros((101,10))
+dw2 = np.zeros((3,2))
 
 
 
@@ -46,15 +48,37 @@ def check_acc(y1, y2):
 def forward(x_curr):
 
 	global x1, x2, x3
-	x1 = np.ones((batch_size, 785))
+	if x_curr is None:
+		x_curr = np.array([
+			[ 0.950802,0.162908,0.400773,0.895084,0.760840],
+			[ 0.899969,0.917215,0.95278,0.632232, 0.445346],
+			[ 0.283375,0.592097,0.921092,0.868487,0.049733]])
+	x1 = np.ones((batch_size, 6))
 	x1[:, :-1] = x_curr
 
 	x2 = x1.dot(w1)
 	x3_relu = x2 * (x2>0)
-	x3 = np.ones((batch_size, 101))
+	x3 = np.ones((batch_size, 3))
 	x3[:, :-1] = x3_relu
 
 	x4 = x3.dot(w2)
+
+
+	print 'x1:'
+	print x1
+	print '\n'
+
+	print 'x2:'
+	print x2
+	print '\n'
+
+	print 'x3:'
+	print x3
+	print '\n'
+
+	print 'x4:'
+	print x4
+	print '\n'
 
 	return x4
 
@@ -65,15 +89,30 @@ def lossCalc(x4,y_true):
 	pred = np.argmax(y, axis=1)
 
 	N, D = x4.shape
-	#print self.y
-	#print y_true
+	print '###########'
+	print y
+	print y_true
+	print '###########'
 	loss = -np.sum(np.log(y[np.arange(N), y_true])) / N
+	print 'loss1:' + str(loss)
 	loss += 0.5 * reg * np.sum(w1[:-1] * w1[:-1])
+	print w1
+	print 'loss2:' + str(loss)
 	loss += 0.5 * reg * np.sum(w2[:-1] * w2[:-1])
+	print w2
+	print 'loss3:' + str(loss)
 
 	dout3 = y[:]
 	dout3[np.arange(N), y_true] -= 1
 	dout3 /= N
+
+	print 'pred:'
+	print pred
+	print '\n'
+
+	print 'dout3:'
+	print dout3
+	print '\n'
 
 	return pred, dout3, loss
 
@@ -96,6 +135,22 @@ def backward(dout3):
 	# print temp1.shape
 	dw1 += reg * temp1
 
+	print 'dw2:'
+	print dw2
+	print '\n'
+
+	print 'dw1:'
+	print dw1
+	print '\n'
+
+	print 'dout2:'
+	print dout2
+	print '\n'
+
+	print 'dout1:'
+	print dout1
+	print '\n'
+
 	w1 -= learning_rate * dw1
 	w2 -= learning_rate * dw2
 
@@ -106,12 +161,12 @@ for epo in xrange(1,epoch+1):
 	if verbose:
 		print 'Starting of epoch %d / %d' % (epo, epoch)
 
-	num_batch = len(x_t) / batch_size
+	num_batch = 1 #len(x_t) / batch_size
 	for bt in xrange(num_batch):
-		idx = np.random.choice(len(x_t),batch_size)
-		x_curr, y_curr = x_t[idx], y_t[idx]
+		#idx = np.random.choice(len(x_t),batch_size)
+		x_curr, y_curr = None, np.array([0,1,0])#x_t[idx], y_t[idx]
 
-		x4 = forward(x_curr)
+		x4 = forward(None)
 		pred, dout3, loss = lossCalc(x4, y_curr)
 		t_acc.append(check_acc(pred, y_curr))
 		t_loss.append(loss)
@@ -119,8 +174,14 @@ for epo in xrange(1,epoch+1):
 		backward(dout3)
 
 		if bt % gap==0:
-			v_idx = np.random.choice(len(x_v),batch_size)
-			x_val, y_val = x_v[v_idx], y_v[v_idx]
+			#v_idx = np.random.choice(len(x_v),batch_size)
+			#x_val, y_val = x_v[v_idx], y_v[v_idx]
+			x_val = np.array([
+				[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
+				[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
+				[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
+				])
+			y_val = np.array([0,0,0])
 			x4_v = forward(x_val)
 			# print type(x4_v)
 			# print type(y_val)
@@ -139,7 +200,7 @@ print 'Average training accuracy: %f' % (sum(t_acc) / l1)
 print 'Average Validation accuracy: %f' % (sum(v_acc) / l2)
 print 'Average training loss: %f' % (sum(t_loss) / l1)
 print 'Average validation loss: %f' % (sum(v_loss) / l2)
-
+'''
 plt.subplot(411)
 plt.plot(range(len(t_loss)),t_loss)
 plt.title('Training Loss')
@@ -157,7 +218,7 @@ plt.plot(range(len(v_acc)),v_acc)
 plt.title('Validation Accuracy')
 
 plt.show()
-
+'''
 
 
 
