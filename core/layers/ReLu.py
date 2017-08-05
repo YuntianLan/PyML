@@ -32,14 +32,11 @@ class ReLu(ly.Layer):
 	def forward(self, x, param):
 		self.x = x
 		size = x.shape
-		self.y = np.zeros(size)
-		for i in xrange(size[0]):
-			for j in xrange(size[1]):
-				self.y[i,j] = max(x[i,j], x[i,j] * self.alpha)
+		self.y = np.maximum(self.x, self.x * self.alpha)
 
-		# print self.x
-		# print self.y
-		# print '\n'
+		# for i in xrange(size[0]):
+		# 	for j in xrange(size[1]):
+		# 		self.y[i,j] = max(x[i,j], x[i,j] * self.alpha)
 
 		return self.y
 
@@ -49,17 +46,22 @@ class ReLu(ly.Layer):
 		self.dldy = dldy
 
 		s1, s2 = self.x.shape[0], self.x.shape[1]
-		self.dldx = np.ones((s1, s2))
-		for i in xrange(s1):
-			for j in xrange(s2):
-				if self.x[i,j]<0:
-					self.dldx[i,j] = self.alpha * dldy[i,j]
-				else:
-					self.dldx[i,j] = dldy[i,j]
+		# self.dldx = np.ones((s1, s2))
+
+		temp = np.maximum(self.x>0, self.alpha * np.ones((s1,s2)))
+		#print 'temp:'
+		#print temp
+		self.dldx = temp * dldy
+
+		# for i in xrange(s1):
+		# 	for j in xrange(s2):
+		# 		if self.x[i,j]<0:
+		# 			self.dldx[i,j] = self.alpha * dldy[i,j]
+		# 		else:
+		# 			self.dldx[i,j] = dldy[i,j]
 
 
 		return self.dldx
-
 
 
 	def update(self,learning_rate):
@@ -79,21 +81,3 @@ class ReLu(ly.Layer):
 		s += '\ndldx:\n' + str(self.dldx) + '\n\n'
 
 		return s
-
-
-# Testing
-if __name__=='__main__':
-	l = ReLu(alpha=0.1)
-	l.init_size((15,10))
-	print l
-
-	x = np.random.randn(15,10)
-	l.forward(x,{})
-	print l
-
-	dldy = np.random.randn(15,10)
-	l.backward(dldy,{})
-	print l
-
-
-

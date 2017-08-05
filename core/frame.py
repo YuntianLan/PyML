@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from layers.DenseLayer import *
 from layers.ReLu import *
 from layers.Softmax import *
+from layers.Sigmoid import *
 
 import sys
 sys.path.append('..')
@@ -100,8 +101,6 @@ class frame(object):
 		print '\nInitialization Complete'
 
 	def check_acc(self, y1, y2):
-		# print y1.shape
-		# print y2.shape
 		assert y1.shape==y2.shape, 'Incompatible input'
 		return len(filter(lambda x: abs(x)<1e-4, y1 - y2))/float(len(y1))
 
@@ -118,8 +117,6 @@ class frame(object):
 
 		N = self.y_val.shape[0]
 		run = num / self.batch_size + ((num % self.batch_size)!=0)
-		#print 'run:' + str(run)
-		#print "run: %d" % run
 		idx = np.random.choice(N, num)
 		x_test = self.x_val[idx]
 		y_test = self.y_val[idx]
@@ -130,43 +127,24 @@ class frame(object):
 
 		for i in xrange(run):
 			start = i * self.batch_size
-			#print (start, start + self.batch_size)
+
 			x_temp = x_test[start: start + self.batch_size]
 			y_temp = y_test[start: start + self.batch_size]
 
-			######################################################
-			# x_temp = np.array([[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
-			# 		[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395],
-			# 		[ 0.068066, 0.230542, 0.377966, 0.986269, 0.339395]])
-			# y_temp = np.array([0,0,0])
-			# print '@@@@@@ validation @@@@@@'
-			# print x_temp
-			######################################################
-
 			for l in self.layers:
 				x_temp = l.forward(x_temp,param)
-				#print x_temp
-			#print '@@@@@@ validation @@@@@@'
-
 
 			running_acc.append(self.check_acc(x_temp,y_temp))
 			curr_loss = self.layers[-1].getLoss(y_temp)
-			######################################################
-			#print 'val_loss:' + str(curr_loss) + '\n'
-			######################################################
 			
 			for l in self.layers:
 					w = l.get_kernel()
 					if not w is None:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
-						######################################################
-						#print w
-						#print 'val_loss:' + str(curr_loss)
-						######################################################
+						
 			running_loss.append(curr_loss)
 		
 		return sum(running_acc) / run, sum(running_loss) / run
-
 
 
 
@@ -197,11 +175,6 @@ class frame(object):
 				x_curr = self.x_train[idx]
 				y_curr = self.y_train[idx]
 
-				################################################
-				#x_curr = self.x_train[bt*self.batch_size:bt*self.batch_size+self.batch_size]
-				#y_curr = self.y_train[bt*self.batch_size:bt*self.batch_size+self.batch_size]
-				################################################
-
 				if self.debug:
 					print 'input for layer 0:'
 					print x_curr
@@ -218,16 +191,12 @@ class frame(object):
 
 				curr_acc = self.check_acc(x_curr, y_curr)
 				curr_loss = self.layers[-1].getLoss(y_curr)
-				################################################
-				#print 'loss loss loss loss:' + str(curr_loss)
-				################################################
+				
 				for l in self.layers:
 					w = l.get_kernel()
 					if not w is None:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
-						################################################
-						#print 'loss loss loss loss:' + str(curr_loss)
-						################################################
+						
 				if self.debug:
 					print 'curr_loss: %f' % curr_loss
 				

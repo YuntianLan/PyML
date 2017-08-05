@@ -35,10 +35,6 @@ class Softmax(ly.Layer, ly.LossCriteria):
 		Given the expected output of the network, compute the loss
 		'''
 		N, D = self.x.shape
-		# print '###########'
-		# print self.y
-		# print y_true
-		# print '###########'
 		self.loss = -np.sum(np.log(self.y[np.arange(N), y_true])) / N
 		self.dldx = self.y[:]
 		self.dldx[np.arange(N), y_true] -= 1
@@ -58,11 +54,6 @@ class Softmax(ly.Layer, ly.LossCriteria):
 
 		self.y = np.exp(x - np.max(x, axis=1, keepdims=True))
 		self.y /= np.sum(self.y, axis=1, keepdims=True)
-
-		# print 'forward forward forward forward'
-		# print self.x
-		# print self.y
-		# print 'forward forward forward forward'
 
 		self.pred = np.argmax(self.y, axis=1)
 
@@ -93,24 +84,6 @@ class Softmax(ly.Layer, ly.LossCriteria):
 		s += '\npred:\n' + str(self.pred) + '\n\n'
 
 		return s
-
-
-# Testing
-if __name__=='__main__':
-	l = SoftmaxLoss()
-
-	l.init_size((2,3))
-	print l
-
-	y = l.forward(np.array([[2,3,4],[6,2,5]]),{})
-	print y
-	print l
-
-	loss = l.getLoss(np.array([2,2]))
-	print loss
-	print l
-
-
 
 
 

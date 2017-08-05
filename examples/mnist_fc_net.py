@@ -16,9 +16,9 @@ sys.path.pop(-1)
 
 layers = [
 	DenseLayer(100,scale=2e-2),
-	ReLu(),
+	ReLu(alpha=0.1),
 	DenseLayer(100,scale=2e-2),
-	ReLu(),
+	ReLu(alpha=0.1),
 	# DenseLayer(100,scale=2e-2),
 	# ReLu(),
 	DenseLayer(10,scale=2e-2),
@@ -35,11 +35,11 @@ data = {
 }
 
 
-args = {'epoch':3, 'batch_size':50, 'reg':5e-2}
+args = {'learning_rate':5e-3, 'epoch':2, 'batch_size':50, 'reg':1e-2, 'debug':0}
 
 fm = frame(layers, data, args)
 
-train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=50,val_num=300)
+train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=300)
 
 l = len(train_acc)
 print 'Average training accuracy: %f' % (sum(train_acc) / l)
