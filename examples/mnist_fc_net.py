@@ -16,30 +16,30 @@ sys.path.pop(-1)
 
 layers = [
 	DenseLayer(100,scale=2e-2),
-	ReLu(alpha=0.1),
+	ReLu(alpha=0.01),
 	DenseLayer(100,scale=2e-2),
-	ReLu(alpha=0.1),
-	# DenseLayer(100,scale=2e-2),
-	# ReLu(),
-	DenseLayer(10,scale=2e-2),
+	ReLu(alpha=0.01),
+	DenseLayer(100,scale=2e-2),
+	ReLu(alpha=0.01),
 	Softmax()
 ]
 
-x, y = get_mnist_data('../data/mnist/mnist_train.csv',40000)
+x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
+x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
 
 data = {
-	'x_train': x[:32000],
-	'y_train': y[:32000],
-	'x_val':   x[32000:],
-	'y_val':   y[32000:]
+	'x_train': x_t,
+	'y_train': y_t,
+	'x_val':   x_v,
+	'y_val':   y_v
 }
 
 
-args = {'learning_rate':5e-3, 'epoch':2, 'batch_size':50, 'reg':1e-2, 'debug':0}
+args = {'learning_rate':5e-3, 'epoch':2, 'batch_size':60, 'reg':1e-2, 'debug':0}
 
 fm = frame(layers, data, args)
 
-train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=300)
+train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=500)
 
 l = len(train_acc)
 print 'Average training accuracy: %f' % (sum(train_acc) / l)

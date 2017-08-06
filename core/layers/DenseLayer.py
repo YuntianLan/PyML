@@ -42,6 +42,7 @@ class DenseLayer(ly.Layer):
 		self.w_size = None
 		self.x = None
 		self.w = None
+		self.y = None
 		self.dldy = None
 		self.dldx = None
 		self.dw = None

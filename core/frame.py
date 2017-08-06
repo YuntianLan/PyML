@@ -5,6 +5,7 @@ from layers.DenseLayer import *
 from layers.ReLu import *
 from layers.Softmax import *
 from layers.Sigmoid import *
+from layers.SVM import *
 
 import sys
 sys.path.append('..')
@@ -87,9 +88,9 @@ class frame(object):
 		'only accept sgd for update_rule'
 		self.update_rule = args.get('update_rule','sgd')
 
-		assert args.get('loss_func','softmax')=='softmax',\
-		'only accept softmax for loss_func'
-		self.loss_func = args.get('loss_func','softmax')
+		# assert args.get('loss_func','softmax')=='softmax',\
+		# 'only accept softmax for loss_func'
+		# self.loss_func = args.get('loss_func','softmax')
 
 		size = (self.batch_size,) + self.x_train[0].shape
 		all_size = []
@@ -116,7 +117,7 @@ class frame(object):
 
 
 		N = self.y_val.shape[0]
-		run = num / self.batch_size + ((num % self.batch_size)!=0)
+		run = num / self.batch_size
 		idx = np.random.choice(N, num)
 		x_test = self.x_val[idx]
 		y_test = self.y_val[idx]
