@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from layers.DenseLayer import *
 from layers.ReLu import *
 from layers.Softmax import *
-from layers.Sigmoid import *
 from layers.SVM import *
 
 import sys

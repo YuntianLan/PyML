@@ -10,18 +10,18 @@ sys.path.pop(-1)
 # A demonstration of using the frame to train a fully-connected
 # network for mnist dataset.
 # Two hidden layers, 100 activations each
-# ReLu nonlinearity
+# Leaky ReLu nonlinearity
 # Softmax cross entropy loss criteria
-# Epoch: 5; Batch size: 50
+# Epoch: 5; Batch size: 60
+
 
 layers = [
 	DenseLayer(100,scale=2e-2),
 	ReLu(alpha=0.01),
 	DenseLayer(100,scale=2e-2),
 	ReLu(alpha=0.01),
-	DenseLayer(100,scale=2e-2),
-	ReLu(alpha=0.01),
-	Softmax()
+	DenseLayer(10,scale=2e-2),
+	SVM()
 ]
 
 x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
@@ -35,7 +35,7 @@ data = {
 }
 
 
-args = {'learning_rate':5e-3, 'epoch':2, 'batch_size':60, 'reg':1e-2, 'debug':0}
+args = {'learning_rate':5e-3, 'epoch':5, 'batch_size':60, 'reg':1e-2, 'debug':0}
 
 fm = frame(layers, data, args)
 

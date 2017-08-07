@@ -9,16 +9,22 @@ class SVM(ly.Layer, ly.LossCriteria):
 		init_type: 'Normal', 'Random'
 		
 		
-		x: input, (N, D)
+		x: input, (N, C)
 		y: output/probability, (N, C)
+		
+		VVVVVV# Jerry told me loss layer may or may not need weights so I'm getting rid of this matrix right now!
 		w: weight (D,C)   w[D,:] = bias
+		^^^^^^
 		pred: prediction, (N, 1)
 		loss: average scalar loss
-		dldx: downgoing gradient (N, D)
+		dldx: downgoing gradient (N, C)
+		
+		VVVVVVVVVVV No need for this param now!
 		dldw:: updating kernel (D, C)
+		^^^^^^^^^^^
 		
 	'''
-	def __init__(self, out_dim, init_type='Normal',scale=2e-2):
+	def __init__(self):
 		######################################################################################
 		##																					##
 		##  I'm assuming out_dim is the number of classes in this data set. (C)				##
@@ -27,7 +33,12 @@ class SVM(ly.Layer, ly.LossCriteria):
 		##  product between X and W. (X * W)												##
 		##																					##
 		######################################################################################
-	
+		######################################################################################
+		##																					##
+		##  Now these comments are useless													##
+		##																					##
+		######################################################################################
+		'''
 		assert type(out_dim)==int, 'Only support vector outputs'
 		assert init_type=='Normal' or init_type=='Random',\
 		'init type needs to be Normal or Random'
@@ -37,27 +48,29 @@ class SVM(ly.Layer, ly.LossCriteria):
 		self.init_type = init_type
 		self.init_func = np.random.randn if init_type=='Normal'\
 		else np.random.rand
-		
+		'''
 		self.x = None
 		self.y = None
-		self.w = None
+		# self.w = None
 		self.pred = None
 		self.loss = None
 		self.dldx = None
-		self.dldw = None
+		# self.dldw = None
 
 	def init_size(self, size):
 		bt_num = size[0]
 		inter_size = size[1] + 1
 		
 		self.x = np.zeros(size)
+		'''
 		self.w = self.init_func(inter_size,self.out_dim) * self.scale
 		#                          ^ D + 1       ^ C
+		'''
 		self.dldx = np.zeros(size)
 		self.pred = np.zeros((size[0], 1))
-		self.y = np.zeros((bt_num, self.out_dim))
+		self.y = np.zeros(size)
 		self.loss = 0
-		return (bt_num, self.out_dim)
+		return size
 
 	def getLoss(self, y_true):
 		'''
@@ -70,15 +83,15 @@ class SVM(ly.Layer, ly.LossCriteria):
 		margins_zeroed = margins * (margins > 0)
 		self.loss = np.sum(np.sum(margins_zeroed, axis = 1) - 1) / N
 		
-		dL = np.zeros((N, self.w.shape[1]))
+		dL = np.zeros(self.y.shape)
 		dL[margins_zeroed > 0] = 1
 		dL[range(N), list(y_true)] = 0
 		dL[range(N), list(y_true)] = -np.sum(dL, axis = 1)
-		self.dldw = (self.x.T).dot(dL) / N
+		#self.dldw = (self.x.T).dot(dL) / N
 
-		self.dldx = dL.dot(self.w.T) / N
+		self.dldx = dL / N
 		#print str(self.dldx)
-		self.dldx = self.dldx[:, :self.dldx.shape[1] - 1]
+		#self.dldx = self.dldx[:, :self.dldx.shape[1] - 1]
 		
 		return self.loss
 
@@ -87,13 +100,8 @@ class SVM(ly.Layer, ly.LossCriteria):
 		Different from other forward functions. This one calculates
 		the result/prediction of the whole network.
 		'''
-		x_size = x.shape
-		x_size = (x_size[0], x_size[1] + 1)
-		assert x_size[1]==self.w.shape[0], 'Incompatible input shape'
-
-		self.x = np.ones(x_size)
-		self.x[:, :x_size[1] - 1] = x
-		self.y = self.x.dot(self.w)
+		self.x = x
+		self.y = self.x
 
 		# print 'forward forward forward forward'
 		# print self.x
@@ -114,26 +122,26 @@ class SVM(ly.Layer, ly.LossCriteria):
 		return self.dldx
 
 	def update(self, learning_rate):
-		self.w -= learning_rate * self.dldw
+		pass
 
 	def get_kernel(self):
-		return self.w
+		return None
 
 	def __str__(self):
 		s = ''
 		s += '\nx:\n' + str(self.x) + '\n\n'
-		s += '\nw:\n' + str(self.w) + '\n\n'
+		# += '\nw:\n' + str(self.w) + '\n\n'
 		s += '\ny:\n' + str(self.y) + '\n\n'
 		s += '\nloss:\n' + str(self.loss) + '\n\n'
 		s += '\ndldx:\n' + str(self.dldx) + '\n\n'
-		s += '\ndldw:\n' + str(self.dldw) + '\n\n'
+		#s += '\ndldw:\n' + str(self.dldw) + '\n\n'
 		s += '\npred:\n' + str(self.pred) + '\n\n'
 
 		return s
 		
 # Testing
 if __name__=='__main__':
-	l = SVM(4)
+	l = SubtotalVectorMachine()
 
 	l.init_size((2,3))
 	print l
