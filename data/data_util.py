@@ -6,7 +6,6 @@ import os
 cifar_10_url = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 
 
-
 # Contains data getter functions
 
 def get_mnist_data(name,num):
