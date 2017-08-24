@@ -5,6 +5,8 @@ from layers.DenseLayer import *
 from layers.ReLu import *
 from layers.Softmax import *
 from layers.SVM import *
+from layers.MaxPool import *
+from layers.im2col import *
 
 import sys
 sys.path.append('..')

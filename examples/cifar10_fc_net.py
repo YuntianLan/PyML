@@ -8,7 +8,7 @@ sys.path.pop(-1)
 
 
 # A demonstration of using the frame to train a fully-connected
-# network for mnist dataset.
+# network for cifar-10 dataset.
 # Two hidden layers, 100 activations each
 # Leaky ReLu nonlinearity
 # Softmax cross entropy loss criteria
@@ -16,16 +16,24 @@ sys.path.pop(-1)
 
 
 layers = [
+	DenseLayer(500,scale=1e-3),
+	ReLu(),
+	DenseLayer(500,scale=2e-2),
+	ReLu(),
 	DenseLayer(100,scale=2e-2),
-	ReLu(alpha=0.01),
-	DenseLayer(100,scale=2e-2),
-	ReLu(alpha=0.01),
+	ReLu(),
 	DenseLayer(10,scale=2e-2),
-	SVM()
+	Softmax()
 ]
 
-x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
-x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
+x_t, y_t = np.zeros((50000,3072)), np.zeros(50000)
+for i in xrange(5):
+	x_sub, y_sub = get_cifar10_data('../data/cifar-10/data_batch_'+str(i+1),10000)
+	x_t[10000*i : 10000*(i+1)] = x_sub.reshape(10000,3072)
+	y_t[10000*i : 10000*(i+1)] = y_sub
+
+x_v, y_v = get_cifar10_data('../data/cifar-10/test_batch',10000)
+x_v = x_v.reshape(10000,3072)
 
 data = {
 	'x_train': x_t,
@@ -35,7 +43,7 @@ data = {
 }
 
 
-args = {'learning_rate':5e-3, 'epoch':3, 'batch_size':60, 'reg':1e-2, 'debug':0}
+args = {'learning_rate':8e-3, 'epoch':3, 'batch_size':100, 'reg':1e-2, 'debug':0}
 
 fm = frame(layers, data, args)
 

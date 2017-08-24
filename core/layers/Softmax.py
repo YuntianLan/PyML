@@ -35,6 +35,7 @@ class Softmax(ly.Layer, ly.LossCriteria):
 		Given the expected output of the network, compute the loss
 		'''
 		N, D = self.x.shape
+		y_true = map(int, y_true)
 		self.loss = -np.sum(np.log(self.y[np.arange(N), y_true])) / N
 		self.dldx = self.y[:]
 		self.dldx[np.arange(N), y_true] -= 1

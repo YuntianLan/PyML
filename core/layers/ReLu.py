@@ -45,21 +45,9 @@ class ReLu(ly.Layer):
 		assert dldy.shape==self.x.shape, 'Incompatible dldy size'
 		self.dldy = dldy
 
-		s1, s2 = self.x.shape[0], self.x.shape[1]
-		# self.dldx = np.ones((s1, s2))
-
-		temp = np.maximum(self.x>0, self.alpha * np.ones((s1,s2)))
-		#print 'temp:'
-		#print temp
+		temp = np.maximum(self.x>0, self.alpha * np.ones(self.x.shape))
+		
 		self.dldx = temp * dldy
-
-		# for i in xrange(s1):
-		# 	for j in xrange(s2):
-		# 		if self.x[i,j]<0:
-		# 			self.dldx[i,j] = self.alpha * dldy[i,j]
-		# 		else:
-		# 			self.dldx[i,j] = dldy[i,j]
-
 
 		return self.dldx
 
