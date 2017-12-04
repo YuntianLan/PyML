@@ -2,6 +2,7 @@ import numpy as numpy
 import matplotlib.pyplot as plt
 import sys
 sys.path.append('..')
+print sys
 from core.frame import *
 from data.data_util import *
 sys.path.pop(-1)
@@ -34,12 +35,11 @@ data = {
 	'y_val':   y_v
 }
 
-
+# Begin of network building
 args = {'learning_rate':5e-3, 'epoch':3, 'batch_size':60, 'reg':1e-2, 'debug':0}
-
 fm = frame(layers, data, args)
-
 train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=500)
+# End of network building, pretty neat isn't it?
 
 l = len(train_acc)
 print 'Average training accuracy: %f' % (sum(train_acc) / l)

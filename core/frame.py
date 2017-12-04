@@ -140,10 +140,13 @@ class frame(object):
 			curr_loss = self.layers[-1].getLoss(y_temp)
 			
 			for l in self.layers:
-					w = l.get_kernel()
-					if not w is None:
+				w = l.get_kernel()
+				if isinstance(w, tuple):
+					for array in w:
 						curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
-						
+				elif isinstance(w, np.ndarray):
+					curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+					
 			running_loss.append(curr_loss)
 		
 		return sum(running_acc) / run, sum(running_loss) / run

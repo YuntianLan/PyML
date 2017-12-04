@@ -71,3 +71,20 @@ class ReLu(ly.Layer):
 		s += '\ndldx:\n' + str(self.dldx) + '\n\n'
 
 		return s
+
+
+
+if __name__=='__main__':
+	l = ReLu()
+	l.init_size((2,3,4,4))
+	x = np.random.randn(2,3,4,4)
+	y = l.forward(x,{})
+	print 'x'
+	print x
+	print 'y'
+	print y
+
+
+
+
+

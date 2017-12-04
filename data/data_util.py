@@ -43,11 +43,13 @@ def get_cifar10_data(name,num):
 		f = open(name, 'rb')
 	except IOError:
 		# os.popen('sh cifar-10/source.sh')
+		print 'Unable to locate cifar10 data, downloading...'
 		path = name[:name.rfind('/')]
 		os.system('wget ' + path + ' ' + cifar_10_url)
 		os.system('tar -xvf ' + path + '/cifar-10-python.tar.gz')
 		os.system('rm ' + path + '/cifar-10-python.tar.gz')
 		f = open(name, 'rb')
+		print 'Donwload complete'
 
 	datadict = pickle.load(f)
 	X = datadict['data'][:num]

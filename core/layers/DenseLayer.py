@@ -21,7 +21,7 @@ class DenseLayer(ly.Layer):
 		dw: kernel gradient
 
 
-	TODO: should we support 3D and higher dimentional input?
+	TODO: using reshape to flatten 2D+ input for now
 	'''
 	def __init__(self,out_dim,init_type='Normal',scale=2e-2):
 		'''
