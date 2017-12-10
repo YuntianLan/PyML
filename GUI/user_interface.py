@@ -147,6 +147,11 @@ class RunThread(Thread):
         args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
         fm = frame(layers, data, args)
 
+        # Let there be 500 points
+        num_run = 250
+        num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
+
+
         for i in xrange(num_run):
             train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass, val_num=10*self.batchsize)
             self.queue0.put(train_acc)
@@ -186,7 +191,7 @@ class UI(tk.Tk):
         # configure option menu and text fields
 
         # frame title
-        self.frame_title = tk.Label(self.left_frame, text="Title", bg="white", fg="black")
+        self.frame_title = tk.Label(self.left_frame, text="Config", bg="white", fg="black")
 
         # model dropdown menu
         self.model_var = tk.StringVar(self.left_frame)
@@ -195,9 +200,9 @@ class UI(tk.Tk):
 
         # choose data sets
 
-        self.data_var = tk.StringVar(self.left_frame)
-        self.data_var.set(self.data[0])
-        self.data_dropdown = tk.OptionMenu(self.left_frame, self.data_var, *self.data)
+        # self.data_var = tk.StringVar(self.left_frame)
+        # self.data_var.set(self.data[0])
+        # self.data_dropdown = tk.OptionMenu(self.left_frame, self.data_var, *self.data)
 
 
         # choose learning rate
@@ -205,9 +210,9 @@ class UI(tk.Tk):
         self.internal_frame = tk.Frame(self.left_frame, width=300, height=400)
 
         tk.Label(self.internal_frame, text="Learning rate:").grid(row=0, pady = 20)
-        tk.Label(self.internal_frame, text="Epoch").grid(row=1)
+        tk.Label(self.internal_frame, text="Epoch:").grid(row=1)
         tk.Label(self.internal_frame, text="Batchsize:").grid(row=2, pady = 20)
-        tk.Label(self.internal_frame, text="Regulization:").grid(row=3)
+        tk.Label(self.internal_frame, text="Regularization:").grid(row=3)
 
 
         self.e1 = tk.Entry(self.internal_frame)
@@ -222,12 +227,13 @@ class UI(tk.Tk):
 
         #buttons
         
-        tk.Button(self.internal_frame, text='Start', command=self.start_training).grid(row=4, column=0, sticky=tk.W,padx=20, pady=20)
+        tk.Button(self.internal_frame, text='Start', command=self.start_training).grid(row=4, column=0, sticky=tk.W,padx=10, pady=20)
+        tk.Button(self.internal_frame, text = 'Clear', command =self.magic_clear).grid(row=5,column = 0, sticky = tk.W, padx=10,pady=20)
         tk.Button(self.internal_frame, text='Quit', command=self.magic_exit).grid(row=4, column=1, sticky=tk.E, pady=20)
 
         self.frame_title.pack(side=tk.TOP, fill=tk.X)
         self.model_dropdown.pack(side=tk.TOP,fill=tk.X, pady = 40)
-        self.data_dropdown.pack(side=tk.TOP,fill=tk.X)
+        # self.data_dropdown.pack(side=tk.TOP,fill=tk.X)
         self.internal_frame.pack(side=tk.TOP, fill=tk.X, pady = 40)
 
 
@@ -262,7 +268,7 @@ class UI(tk.Tk):
         print("learning_rate: "+self.e1.get())
         print("epoch: "+self.e2.get())
         print("batchsize: "+ self.e3.get())
-        print("regulization: "+ self.e4.get())
+        print("regularization: "+ self.e4.get())
         self.learning_rate = float(self.e1.get())
         self.epoch = int(self.e2.get())
         self.batchsize = int(self.e3.get())
@@ -285,8 +291,8 @@ class UI(tk.Tk):
             acc1 = self.queue1.get(0)
             canvas0 = self.graphs[0]
             canvas1 = self.graphs[1]
-            newPt0 = Point(self.prev_pt0.x+1, int(HEIGHT-HEIGHT*acc0))
-            newPt1 = Point(self.prev_pt1.x+1, int(HEIGHT-HEIGHT*acc1))
+            newPt0 = Point(self.prev_pt0.x+2, int(HEIGHT-HEIGHT*acc0))
+            newPt1 = Point(self.prev_pt1.x+2, int(HEIGHT-HEIGHT*acc1))
             canvas0.create_line(self.prev_pt0.x, self.prev_pt0.y, newPt0.x, newPt0.y, fill="blue", width=3)
             canvas1.create_line(self.prev_pt1.x, self.prev_pt1.y, newPt1.x, newPt1.y, fill="red", width=3)
             self.acc1_title.config(text = "Training Accuracy: "+str(acc0))
@@ -310,6 +316,15 @@ class UI(tk.Tk):
     def magic_exit(self):
         exit(0)
 
+    def magic_clear(self):
+        canvas0 = self.graphs[0]
+        canvas1 = self.graphs[1]
+        canvas0.delete("all")
+        canvas1.delete("all")
+        self.prev_pt0 = Point(0,HEIGHT)
+        self.prev_pt1 = Point(0,HEIGHT)
+        self.acc1_title.config(text = "Training Accuracy")
+        self.acc2_title.config(text = "Validation Accuracy")
 
 if __name__ == "__main__":
     root = tk.Tk()
