@@ -43,7 +43,7 @@ class RunThread(Thread):
             x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
             x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
 
-            x_t /= 255.; x_v /= 255.
+            x_t /= 32.; x_v /= 32.
 
             # Let there be 500 points
             num_run = 500
@@ -55,18 +55,95 @@ class RunThread(Thread):
                 'x_val':   x_v,
                 'y_val':   y_v
             }
+        elif self.model=='Cifar10 Fully Connected':
+            layers = [
+                DenseLayer(1000,scale=2e-2),
+                ReLu(alpha=0.01),
+                DenseLayer(500,scale=2e-2),
+                ReLu(alpha=0.01),
+                DenseLayer(250,scale=2e-2),
+                ReLu(alpha=0.01),
+                DenseLayer(10,scale=2e-2),
+                Softmax()
+            ]
 
-            # Build the network
-            args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
-            fm = frame(layers, data, args)
+            x_t, y_t = np.zeros((50000,3072)), np.zeros(50000)
+            for i in xrange(5):
+                x_sub, y_sub = get_cifar10_data('../data/cifar-10/data_batch_'+str(i+1),10000)
+                x_t[10000*i : 10000*(i+1)] = x_sub.reshape(10000,3072)
+                y_t[10000*i : 10000*(i+1)] = y_sub
 
-            for i in xrange(num_run):
-                train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
-                self.queue0.put(train_acc)
-                self.queue1.put(val_acc)
-                # a0_graph=self.update_graph(a0_graph, 0, train_acc)
-                # a1_graph=self.update_graph(a1_graph, 1, val_acc)
-                # TODO: do whatever necessary with those 2 values
+            x_v, y_v = get_cifar10_data('../data/cifar-10/test_batch',10000)
+            x_v = x_v.reshape(10000,3072)
+
+            x_t /= 32.; x_v /= 32.
+
+            data = {
+                'x_train': x_t,
+                'y_train': y_t,
+                'x_val':   x_v,
+                'y_val':   y_v
+            }
+
+            # Let there be 500 points
+            num_run = 500
+            num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
+
+
+        else:
+
+            # Let there be 500 points
+            num_run = 500
+            num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
+
+
+            x_t, y_t = np.zeros((50000,3,32,32)), np.zeros(50000)
+            for i in xrange(5):
+                x_t[10000*i : 10000*(i+1)], y_t[10000*i : 10000*(i+1)]=get_cifar10_data('../data/cifar-10/data_batch_'+str(i+1),10000)
+            x_v, y_v = get_cifar10_data('../data/cifar-10/test_batch',10000)
+            
+            data = {
+                'x_train': x_t,
+                'y_train': y_t,
+                'x_val':   x_v,
+                'y_val':   y_v
+            }
+
+
+
+            layers = [
+                ConvLayer(3,(5,5),1,0),
+                ReLu(),
+                ConvLayer(3,(5,5),1,4),
+                ReLu(),
+                MaxPool((8,8),8),
+                ConvLayer(3,(5,5),1,4),
+                ReLu(),
+                ConvLayer(3,(5,5),1,4),
+                ReLu(),
+                MaxPool((2,2),2),
+                ConvLayer(3,(5,5),1,4),
+                ReLu(),
+                ConvLayer(1,(5,5),1,4),
+                ReLu(),
+                MaxPool((2,2),2),
+                DenseLayer(10, scale=2e-2),
+                Softmax()
+            ]
+
+
+
+        # Build the network
+        args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
+        fm = frame(layers, data, args)
+
+        for i in xrange(num_run):
+            train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
+            self.queue0.put(train_acc)
+            self.queue1.put(val_acc)
+            # a0_graph=self.update_graph(a0_graph, 0, train_acc)
+            # a1_graph=self.update_graph(a1_graph, 1, val_acc)
+            # TODO: do whatever necessary with those 2 values
 
 class UI(tk.Tk):
     def __init__(self, master):

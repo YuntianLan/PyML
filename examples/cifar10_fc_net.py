@@ -36,7 +36,7 @@ for i in xrange(5):
 x_v, y_v = get_cifar10_data('../data/cifar-10/test_batch',10000)
 x_v = x_v.reshape(10000,3072)
 
-x_t /= 255; x_v /= 255
+x_t /= 64.; x_v /= 64.
 
 data = {
 	'x_train': x_t,
