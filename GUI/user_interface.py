@@ -17,6 +17,18 @@ Y0=25
 X1=230
 Y1=285
 
+HEIGHT=290
+
+class Point():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def set(self, x, y):
+        self.x = x
+        self.y = y
+
+
 class RunThread(Thread):
     def __init__(self, queue0, queue1, model, learning_rate,epoch,batchsize,regulization):
         Thread.__init__(self)
@@ -138,9 +150,11 @@ class RunThread(Thread):
         fm = frame(layers, data, args)
 
         for i in xrange(num_run):
-            train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
+            train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass, val_num=10*self.batchsize)
             self.queue0.put(train_acc)
             self.queue1.put(val_acc)
+            print("train_acc: "+str(train_acc))
+            print("val_acc: "+str(val_acc))
             # a0_graph=self.update_graph(a0_graph, 0, train_acc)
             # a1_graph=self.update_graph(a1_graph, 1, val_acc)
             # TODO: do whatever necessary with those 2 values
@@ -158,8 +172,10 @@ class UI(tk.Tk):
         self.graphs = []
         self.queue0 = None
         self.queue1 = None
-        self.a0_graph = None
-        self.a1_graph = None
+        # self.a0_graph = None
+        # self.a1_graph = None
+        self.prev_pt0 = Point(0,HEIGHT)
+        self.prev_pt1 = Point(0,HEIGHT)
         
         self.title("Not Hotdog")
         self.geometry("800x640")
@@ -209,7 +225,7 @@ class UI(tk.Tk):
         #buttons
         
         tk.Button(self.internal_frame, text='Start', command=self.start_training).grid(row=4, column=0, sticky=tk.W,padx=20, pady=20)
-        tk.Button(self.internal_frame, text='Quit', command=self.internal_frame.quit).grid(row=4, column=1, sticky=tk.E, pady=20)
+        tk.Button(self.internal_frame, text='Quit', command=self.magic_exit).grid(row=4, column=1, sticky=tk.E, pady=20)
 
         self.frame_title.pack(side=tk.TOP, fill=tk.X)
         self.model_dropdown.pack(side=tk.TOP,fill=tk.X, pady = 40)
@@ -218,20 +234,20 @@ class UI(tk.Tk):
 
 
         # set up canvases
-        acc1_title = tk.Label(self.right_canvas, text="Accuracy1", background="grey", foreground="white")
-        acc1_space = tk.Canvas(self.right_canvas, background="white", width=300, height=290)
+        self.acc1_title = tk.Label(self.right_canvas, text="Training Accuracy", background="grey", foreground="white")
+        acc1_space = tk.Canvas(self.right_canvas, background="white", width=500, height=290)
         acc1_space.pack_propagate(0)
 
         # acc1_space.create_rectangle(70, 25, 230, 285, fill="blue")
 
-        acc2_title = tk.Label(self.right_canvas, text="Accuracy2", background="grey", foreground="white")
-        acc2_space = tk.Canvas(self.right_canvas, background="white", width=300, height=290)
+        self.acc2_title = tk.Label(self.right_canvas, text="Validation Accuracy", background="grey", foreground="white")
+        acc2_space = tk.Canvas(self.right_canvas, background="white", width=500, height=290)
         acc2_space.pack_propagate(0)
 
-        acc1_title.pack(side=tk.TOP, fill=tk.X)
+        self.acc1_title.pack(side=tk.TOP, fill=tk.X)
         acc1_space.pack(side=tk.TOP)
         
-        acc2_title.pack(side=tk.TOP, fill=tk.X)
+        self.acc2_title.pack(side=tk.TOP, fill=tk.X)
         acc2_space.pack(side=tk.BOTTOM)
         
         self.graphs.append(acc1_space)
@@ -254,8 +270,8 @@ class UI(tk.Tk):
         self.batchsize = int(self.e3.get())
         self.regulization = float(self.e4.get())
 
-        self.a0_graph = self.graphs[0].create_rectangle(X0, Y0, X1, Y1, fill="blue")
-        self.a1_graph = self.graphs[1].create_rectangle(X0, Y0, X1, Y1, fill="red")
+        # self.a0_graph = self.graphs[0].create_rectangle(X0, Y0, X1, Y1, fill="blue")
+        # self.a1_graph = self.graphs[1].create_rectangle(X0, Y0, X1, Y1, fill="red")
 
         self.queue0 = Queue.Queue()
         self.queue1 = Queue.Queue()
@@ -271,21 +287,30 @@ class UI(tk.Tk):
             acc1 = self.queue1.get(0)
             canvas0 = self.graphs[0]
             canvas1 = self.graphs[1]
-            height = Y1 - Y0
-            newY0_0 = int(height*acc0+Y0)
-            newY0_1 = int(height*acc1+Y0)
-            canvas0.delete(self.a0_graph)
-            canvas1.delete(self.a1_graph)
-            self.a0_graph = canvas0.create_rectangle(X0, newY0_0, X1, Y1, fill="blue")
-            self.a1_graph = canvas1.create_rectangle(X0, newY0_1, X1, Y1, fill="red")
-            print("new acc0: "+ str(newY0_0-Y0))
-            print("new acc1: "+ str(newY0_1-Y0))
+            newPt0 = Point(self.prev_pt0.x+1, int(HEIGHT-HEIGHT*acc0))
+            newPt1 = Point(self.prev_pt1.x+1, int(HEIGHT-HEIGHT*acc1))
+            canvas0.create_line(self.prev_pt0.x, self.prev_pt0.y, newPt0.x, newPt0.y, fill="blue", width=3)
+            canvas1.create_line(self.prev_pt1.x, self.prev_pt1.y, newPt1.x, newPt1.y, fill="red", width=3)
+            self.acc1_title.config(text = "Training Accuracy: "+str(acc0))
+            self.acc2_title.config(text = "Validation Accuracy:  "+str(acc1))
+            self.prev_pt0 = newPt0
+            self.prev_pt1 = newPt1
+            # height = Y1 - Y0
+            # newY0_0 = int(height*acc0+Y0)
+            # newY0_1 = int(height*acc1+Y0)
+            # canvas0.delete(self.a0_graph)
+            # canvas1.delete(self.a1_graph)
+            # self.a0_graph = canvas0.create_rectangle(X0, newY0_0, X1, Y1, fill="blue")
+            # self.a1_graph = canvas1.create_rectangle(X0, newY0_1, X1, Y1, fill="red")
+            # print("new acc0: "+ str(newY0_0-Y0))
+            # print("new acc1: "+ str(newY0_1-Y0))
             self.update_graph()
 
         except Queue.Empty:
             self.master.after(100, self.update_graph)
         
-        
+    def magic_exit(self):
+        exit(0)
 
 
 if __name__ == "__main__":
