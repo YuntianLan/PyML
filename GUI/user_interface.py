@@ -9,20 +9,80 @@ from core.frame import *
 from data.data_util import *
 sys.path.pop(-1)
 import time
+from threading import Thread
+import Queue
 
+X0=70
+Y0=25
+X1=230
+Y1=285
 
+class RunThread(Thread):
+    def __init__(self, queue0, queue1, model, learning_rate,epoch,batchsize,regulization):
+        Thread.__init__(self)
+        self.queue0 = queue0
+        self.queue1 = queue1
+        self.model = model
+        self.learning_rate = learning_rate
+        self.epoch = epoch
+        self.batchsize = batchsize
+        self.regulization = regulization
+    
+    def run(self):
+        if self.model=='MNIST Fully Connected':
+
+            # Layers and data
+            layers = [
+                DenseLayer(100,scale=2e-2),
+                ReLu(alpha=0.01),
+                DenseLayer(100,scale=2e-2),
+                ReLu(alpha=0.01),
+                DenseLayer(10,scale=2e-2),
+                Softmax()
+            ]
+            x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
+            x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
+
+            x_t /= 255.; x_v /= 255.
+
+            # Let there be 500 points
+            num_run = 500
+            num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
+
+            data = {
+                'x_train': x_t,
+                'y_train': y_t,
+                'x_val':   x_v,
+                'y_val':   y_v
+            }
+
+            # Build the network
+            args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
+            fm = frame(layers, data, args)
+
+            for i in xrange(num_run):
+                train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
+                self.queue0.put(train_acc)
+                self.queue1.put(val_acc)
+                # a0_graph=self.update_graph(a0_graph, 0, train_acc)
+                # a1_graph=self.update_graph(a1_graph, 1, val_acc)
+                # TODO: do whatever necessary with those 2 values
 
 class UI(tk.Tk):
-    def __init__(self, models):
+    def __init__(self, master):
         tk.Tk.__init__(self)
-
-        self.models = models
+        self.master = master
+        self.models = ['MNIST Fully Connected', 'Cifar10 Fully Connected', 'Cifar10 CNN']
         self.data = ["mnist", "cifar10"]
         self.learning_rate = None
         self.epoch = 0
         self.batchsize = None
         self.regulization = None
         self.graphs = []
+        self.queue0 = None
+        self.queue1 = None
+        self.a0_graph = None
+        self.a1_graph = None
         
         self.title("Not Hotdog")
         self.geometry("800x640")
@@ -34,7 +94,7 @@ class UI(tk.Tk):
         self.right_canvas.pack_propagate(0)
         # configure option menu and text fields
 
-  		# frame title
+        # frame title
         self.frame_title = tk.Label(self.left_frame, text="Title", bg="white", fg="black")
 
         # model dropdown menu
@@ -79,9 +139,13 @@ class UI(tk.Tk):
         self.data_dropdown.pack(side=tk.TOP,fill=tk.X)
         self.internal_frame.pack(side=tk.TOP, fill=tk.X, pady = 40)
 
+
+        # set up canvases
         acc1_title = tk.Label(self.right_canvas, text="Accuracy1", background="grey", foreground="white")
         acc1_space = tk.Canvas(self.right_canvas, background="white", width=300, height=290)
         acc1_space.pack_propagate(0)
+
+        # acc1_space.create_rectangle(70, 25, 230, 285, fill="blue")
 
         acc2_title = tk.Label(self.right_canvas, text="Accuracy2", background="grey", foreground="white")
         acc2_space = tk.Canvas(self.right_canvas, background="white", width=300, height=290)
@@ -100,66 +164,54 @@ class UI(tk.Tk):
         self.left_frame.pack(side=tk.LEFT)
 
     def start_training(self):
-    	model = self.model_var.get()
-    	# data = self.data_var.get()
+        model = self.model_var.get()
+        # data = self.data_var.get()
+
+        print("current model: "+model)
+        print("learning_rate: "+self.e1.get())
+        print("epoch: "+self.e2.get())
+        print("batchsize: "+ self.e3.get())
+        print("regulization: "+ self.e4.get())
         self.learning_rate = float(self.e1.get())
         self.epoch = int(self.e2.get())
         self.batchsize = int(self.e3.get())
         self.regulization = float(self.e4.get())
-        
 
-        if model=='MNIST Fully Connected':
+        self.a0_graph = self.graphs[0].create_rectangle(X0, Y0, X1, Y1, fill="blue")
+        self.a1_graph = self.graphs[1].create_rectangle(X0, Y0, X1, Y1, fill="red")
 
+        self.queue0 = Queue.Queue()
+        self.queue1 = Queue.Queue()
 
+        RunThread(self.queue0, self.queue1, model,self.learning_rate,self.epoch,self.batchsize,self.regulization).start()
+        self.master.after(100, self.update_graph)
 
-            # Layers and data
-            layers = [
-                DenseLayer(100,scale=2e-2),
-                ReLu(alpha=0.01),
-                DenseLayer(100,scale=2e-2),
-                ReLu(alpha=0.01),
-                DenseLayer(10,scale=2e-2),
-                Softmax()
-            ]
-            x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
-            x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
-
-            x_t /= 255.; x_v /= 255.
-
-            # Let there be 500 points
-            num_run = 500
-            num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
-
-            data = {
-                'x_train': x_t,
-                'y_train': y_t,
-                'x_val':   x_v,
-                'y_val':   y_v
-            }
-
-            # Build the network
-            args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
-            fm = frame(layers, data, args)
-
-            for i in xrange(num_run):
-                train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
-                print train_acc, val_acc
-                # TODO: do whatever necessary with those 2 values
-
-
-        print("current model: "+model)
-        print("current data: "+data)
-        print("learning_rate: "+self.learning_rate)
-        print("epoch: "+self.epoch)
-        print("batchsize: "+ self.batchsize)
-        print("regulization: "+ self.regulization)
 
     def update_graph(self):
-    	pass
+        
+        try:
+            acc0 = self.queue0.get(0)
+            acc1 = self.queue1.get(0)
+            canvas0 = self.graphs[0]
+            canvas1 = self.graphs[1]
+            height = Y1 - Y0
+            newY0_0 = int(height*acc0+Y0)
+            newY0_1 = int(height*acc1+Y0)
+            canvas0.delete(self.a0_graph)
+            canvas1.delete(self.a1_graph)
+            self.a0_graph = canvas0.create_rectangle(X0, newY0_0, X1, Y1, fill="blue")
+            self.a1_graph = canvas1.create_rectangle(X0, newY0_1, X1, Y1, fill="red")
+            print("new acc0: "+ str(newY0_0-Y0))
+            print("new acc1: "+ str(newY0_1-Y0))
+            self.update_graph()
 
+        except Queue.Empty:
+            self.master.after(100, self.update_graph)
+        
+        
 
 
 if __name__ == "__main__":
-    models = ['MNIST Fully Connected', 'Cifar10 Fully Connected', 'Cifar10 CNN']
-    ui = UI(models)
+    root = tk.Tk()
+    ui = UI(root)
     ui.mainloop()
