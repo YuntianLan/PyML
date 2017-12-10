@@ -124,9 +124,11 @@ class UI(tk.Tk):
             x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
             x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
 
+            x_t /= 255.; x_v /= 255.
+
             # Let there be 500 points
             num_run = 500
-            num_pass = len(x_t) * self.epoch / self.batchsize
+            num_pass = len(x_t) * self.epoch / (self.batchsize * self.num_run)
 
             data = {
                 'x_train': x_t,
