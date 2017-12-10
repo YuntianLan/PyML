@@ -160,7 +160,7 @@ class frame(object):
 		param = {'mode':'train','debug':self.debug,'reg':self.reg}
 		if not val_num: val_num = self.batch_size
 
-		for i in xrange(num_pass):
+		for j in xrange(num_pass):
 
 			idx = np.random.choice(self.x_train.shape[0], self.batch_size)
 			x_curr = self.x_train[idx]
@@ -210,9 +210,12 @@ class frame(object):
 				# what if we add changing lrs in the future?
 				self.layers[-i].update(self.learning_rate)
 
-			curr_val_acc, curr_val_loss = self.test_accu_loss(val_num)
-			val_acc = curr_val_acc
-			val_loss = curr_val_loss
+			# print j
+			if j==num_pass-1:
+				# print 'val_num: ' + str(val_num)
+				# print 'batch size: ' + str(self.batch_size)
+				val_acc, val_loss = self.test_accu_loss(val_num)
+			
 
 
 		return train_acc, val_acc, train_loss, val_loss
