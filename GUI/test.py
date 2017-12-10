@@ -8,9 +8,9 @@ sys.path.pop(-1)
 import time
 
 epoch = 1
-learning_rate = 5e-2
-batch_size = 50
-reg = 5e-2
+learning_rate = 5e-3
+batch_size = 51
+reg = 1e-2
 
 
 # Layers and data
@@ -43,12 +43,12 @@ data = {
 args = {'learning_rate':learning_rate, 'epoch':epoch, 'batch_size':batch_size, 'reg':reg, 'debug':0}
 fm = frame(layers, data, args)
 
-train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=500)
+# train_acc, val_acc, train_loss, val_loss = fm.train(verbose=2,gap=10,val_num=500)
 
-# for i in xrange(num_run):
-#     train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
-#     print train_acc, val_acc
-#     # TODO: do whatever necessary with those 2 values
+for i in xrange(num_run):
+    train_acc, val_acc, _, _ = fm.passes(num_pass = num_pass)
+    print train_acc, val_acc
+    # TODO: do whatever necessary with those 2 values
 
 
 
