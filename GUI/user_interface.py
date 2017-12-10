@@ -110,9 +110,7 @@ class UI(tk.Tk):
 
         if model=='MNIST Fully Connected':
 
-            # Let there be 500 points
-            num_run = 500
-            num_pass = len(x_t) * self.epoch / self.batchsize
+
 
             # Layers and data
             layers = [
@@ -125,6 +123,10 @@ class UI(tk.Tk):
             ]
             x_t, y_t = get_mnist_data('../data/mnist/mnist_train.csv',50000)
             x_v, y_v = get_mnist_data('../data/mnist/mnist_test.csv',10000)
+
+            # Let there be 500 points
+            num_run = 500
+            num_pass = len(x_t) * self.epoch / self.batchsize
 
             data = {
                 'x_train': x_t,
@@ -157,6 +159,5 @@ class UI(tk.Tk):
 
 if __name__ == "__main__":
     models = ['MNIST Fully Connected', 'Cifar10 Fully Connected', 'Cifar10 CNN']
-    models = ['1','2','3']
     ui = UI(models)
     ui.mainloop()
