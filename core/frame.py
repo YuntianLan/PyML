@@ -7,6 +7,8 @@ from layers.Softmax import *
 from layers.SVM import *
 from layers.MaxPool import *
 from layers.im2col import *
+from layers.MaxPool import *
+from layers.ConvLayer import *
 
 import sys
 sys.path.append('..')
@@ -103,6 +105,8 @@ class frame(object):
 		print '\nInitialization Complete'
 
 	def check_acc(self, y1, y2):
+		# print y1.shape
+		# print y2.shape
 		assert y1.shape==y2.shape, 'Incompatible input'
 		return len(filter(lambda x: abs(x)<1e-4, y1 - y2))/float(len(y1))
 
@@ -150,6 +154,69 @@ class frame(object):
 			running_loss.append(curr_loss)
 		
 		return sum(running_acc) / run, sum(running_loss) / run
+
+
+	def passes(self, num_pass=1, verbose=0, val_num=None):
+		param = {'mode':'train','debug':self.debug,'reg':self.reg}
+		if not val_num: val_num = self.batch_size
+
+		for i in xrange(num_pass):
+
+			idx = np.random.choice(self.x_train.shape[0], self.batch_size)
+			x_curr = self.x_train[idx]
+			y_curr = self.y_train[idx]
+
+			if self.debug:
+				print 'input for layer 0:'
+				print x_curr
+				print '\n'
+
+			for i in xrange(len(self.layers)):
+				l = self.layers[i]
+				x_curr = l.forward(x_curr,param)
+				# if bt==ep==0 and self.debug:
+				# 	print 'out from layer %d' % i
+				# 	print x_curr
+				# 	print '\n'
+			# x_curr = prediction for current batch
+
+			curr_acc = self.check_acc(x_curr, y_curr)
+			curr_loss = self.layers[-1].getLoss(y_curr)
+			
+			for l in self.layers:
+				w = l.get_kernel()
+				if not w is None:
+					curr_loss += 0.5 * self.reg * np.sum(w[:-1] * w[:-1])
+					
+			if self.debug:
+				print 'curr_loss: %f' % curr_loss
+			
+			train_acc = curr_acc
+			train_loss = curr_loss
+
+			# if verbose>1 and bt % gap==0:
+				
+			# 	print 'Pass %d / %d:' % (bt, num_batch)
+			# 	print 'Training accuracy: %f' % curr_acc
+			# 	print 'Training loss: %f' % curr_loss
+
+			dldy = None
+			for i in range(1,len(self.layers)+1):
+				dldy = self.layers[-i].backward(dldy,param)
+				if self.debug:
+					print 'dldy for layer %d:' % (len(self.layers)-i)
+					print dldy
+				# So the update only works for constant lr,
+				# what if we add changing lrs in the future?
+				self.layers[-i].update(self.learning_rate)
+
+			curr_val_acc, curr_val_loss = self.test_accu_loss(val_num)
+			val_acc = curr_val_acc
+			val_loss = curr_val_loss
+
+
+		return train_acc, val_acc, train_loss, val_loss
+
 
 
 

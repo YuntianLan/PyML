@@ -3,14 +3,11 @@ class Layer(object):
 	'''
 	The superclass for all layers in the frame.
 
-	forward(self,x,param)
-	backward(self,dldy,param)
-	update(self,learning_rate)
-	init_size(self,in)
-
-
-	getKer(self)
-	setKer(self)
+	forward(self, x, param)
+	backward(self, dldy, param)
+	update(self, learning_rate)
+	init_size(self, size)
+	get_kernel(self)
 	'''
 	def forward(self, x, param):
 		# Completes a forward pass and return y

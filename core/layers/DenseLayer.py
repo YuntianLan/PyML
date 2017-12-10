@@ -1,6 +1,7 @@
 import numpy as np
 import Layer as ly
 
+
 class DenseLayer(ly.Layer):
 	'''
 	Dense layer: learnable layer, takes in a 2D array
@@ -48,6 +49,8 @@ class DenseLayer(ly.Layer):
 		self.dldx = None
 		self.dw = None
 
+		self.reshape_param = None
+
 
 	def init_size(self,size):
 		'''
@@ -56,6 +59,20 @@ class DenseLayer(ly.Layer):
 
 		size: input size(tuple)
 		'''
+
+		# Brute force solution for 2D+ input
+		# TODO: improvements?
+		self.reshape_param = size
+		if len(size)>2:
+			# self.reshape_param = (size[0],size[1],size)
+			print size
+			total = 1
+			for i in xrange(1, len(size)):
+				total *= size[i]
+			size = (size[0], total)
+			print size
+
+
 		bt_num = size[0]
 		inter_size = size[1] + 1
 
@@ -64,7 +81,7 @@ class DenseLayer(ly.Layer):
 
 		self.w[-1] = 0
 
-		return (bt_num,self.out_dim)
+		return (bt_num, self.out_dim)
 
 
 	def forward(self, x, param):
@@ -75,6 +92,10 @@ class DenseLayer(ly.Layer):
 		Needs x to be compatible with w's size
 		TODO: what if sizes aren't compatible?
 		'''
+
+		# Again, brute force solution for 2D+ input
+		x = x.reshape(x.shape[0], self.w_size[0]-1)
+
 		x_size = x.shape
 		x_size = (x_size[0], x_size[1] + 1)
 		assert x_size[1]==self.w_size[0], 'Incompatible input shape'
@@ -114,7 +135,13 @@ class DenseLayer(ly.Layer):
 			print self.dw
 			print '\n'
 
-		return self.dldx[:,:-1]
+
+		# print "self.dldx:"
+		# print self.dldx.shape
+		# self.dldx = self.dldx[:,:-1].reshape(self.reshape_param)
+		# print 'denselayer backward shape:'
+		# print self.dldx
+		return self.dldx[:,:-1].reshape(self.reshape_param)
 
 
 	def update(self,learning_rate):
@@ -145,19 +172,21 @@ class DenseLayer(ly.Layer):
 # Just for testing
 if __name__=="__main__":
 	l = DenseLayer(8)
-	l.init_size((15,10))
 
-	x = np.random.rand(15,10)
+	x = np.random.rand(15,10,6)
 	dldy = np.random.rand(15,8)
+
+	l.init_size(x.shape)
+
 
 	l.forward(x,{})
 	l.backward(dldy,{})
 
-	print l
+	#print l
 
 	l.update(0.03)
 
-	print l
+	#print l
 
 
 

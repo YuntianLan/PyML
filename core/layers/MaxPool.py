@@ -1,5 +1,6 @@
 import numpy as np
 import Layer as ly
+from fast_layers import *
 
 from im2col import *
 from im2col_cython import col2im_cython, im2col_cython
@@ -50,12 +51,15 @@ def max_pool_backward_reshape(dout, cache):
 	however this results in a significant performance penalty (about 40% slower)
 	and is unlikely to matter in practice so we don't do it.
 	"""
+	
 	x, x_reshaped, out = cache
 
 	dx_reshaped = np.zeros_like(x_reshaped)
 	out_newaxis = out[:, :, :, np.newaxis, :, np.newaxis]
 	mask = (x_reshaped == out_newaxis)
 	dout_newaxis = dout[:, :, :, np.newaxis, :, np.newaxis]
+	# print dout_newaxis.shape
+	# print dx_reshaped.shape
 	dout_broadcast, _ = np.broadcast_arrays(dout_newaxis, dx_reshaped)
 	dx_reshaped[mask] = dout_broadcast[mask]
 	dx_reshaped /= np.sum(mask, axis=(3, 5), keepdims=True)
@@ -116,7 +120,7 @@ def max_pool_backward_im2col(dout, cache):
 
 
 
-class MaxPool(ly.Layer):
+class MaxPool(object):
 	'''
 	Max Pooling Layer: Regularization layer, takes in a tensor
 	For now only allow 4D input
@@ -152,13 +156,15 @@ class MaxPool(ly.Layer):
 
 		h, w = self.size[0], self.size[1]
 		in_h, in_w = size[2], size[3]
+		print self.size
+		print size
 		assert (in_h - h) % self.stride==0
 		assert (in_w - w) % self.stride==0
 
 		out_h = (in_h - h) / self.stride + 1
 		out_w = (in_w - w) / self.stride + 1
 
-		out_size = (size[0],out_h,out_w,size[1])
+		out_size = (size[0], size[1], out_h, out_w)
 		self.x = np.zeros(size)
 		self.y = np.zeros(out_size)
 		self.max_idx = np.zeros(out_size, dtype=int)
@@ -176,10 +182,10 @@ class MaxPool(ly.Layer):
 		pool_param = {'pool_height':self.size[0], 
 		'pool_width':self.size[1], 'stride':self.stride}
 
-		print 'x.shape:'
-		print self.x.shape
-		print '\nparameters:'
-		print pool_param
+		# print 'x.shape:'
+		# print self.x.shape
+		# print '\nparameters:'
+		# print pool_param
 
 
 		N, C, H, W = x.shape
@@ -200,7 +206,7 @@ class MaxPool(ly.Layer):
 		return out
 
 	def backward(self, dldy, param):
-		method, real_cache = cache
+		method, real_cache = self.cache
 		if method == 'reshape':
 			self.dldx = max_pool_backward_reshape(dldy, real_cache)
 			return self.dldx
@@ -232,7 +238,7 @@ class MaxPool(ly.Layer):
 		# 				self.y[n,h,w,c] = np.max(sub)
 		# 				self.max_idx[n,h,w,c] = np.argmax(sub)
 		# return self.y
-				
+
 def rgb2gray(rgb):
 
     r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
@@ -241,7 +247,7 @@ def rgb2gray(rgb):
     return gray
 
 if __name__=='__main__':
-	l = MaxPool((8,8),8)
+	l = MaxPool((8,8),4)
 
 	from scipy import misc
 	import matplotlib.pyplot as plt
@@ -251,6 +257,9 @@ if __name__=='__main__':
 
 	# print x.shape
 	# print img.shape
+
+	plt.imshow(misc.face())
+	plt.show()
 
 	x = np.array([misc.face().transpose()])
 	l.init_size(x.shape)

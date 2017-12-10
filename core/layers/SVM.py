@@ -76,6 +76,7 @@ class SVM(ly.Layer, ly.LossCriteria):
 		'''
 		Given the expected output of the network, compute the loss
 		'''
+		y_true = np.array(y_true, dtype=int)
 		N, D = self.x.shape
 		correct_class_score = self.y[np.arange(N), y_true]
 		correct_class_score_T = correct_class_score.reshape(N, 1)
