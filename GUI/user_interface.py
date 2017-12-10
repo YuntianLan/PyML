@@ -102,10 +102,10 @@ class UI(tk.Tk):
     def start_training(self):
     	model = self.model_var.get()
     	# data = self.data_var.get()
-        self.learning_rate = self.e1.get()
-        self.epoch = self.e2.get()
-        self.batchsize = self.e3.get()
-        self.regulization = self.e4.get()
+        self.learning_rate = float(self.e1.get())
+        self.epoch = int(self.e2.get())
+        self.batchsize = int(self.e3.get())
+        self.regulization = float(self.e4.get())
         
 
         if model=='MNIST Fully Connected':
@@ -128,7 +128,7 @@ class UI(tk.Tk):
 
             # Let there be 500 points
             num_run = 500
-            num_pass = len(x_t) * self.epoch / (self.batchsize * self.num_run)
+            num_pass = len(x_t) * self.epoch / (self.batchsize * num_run)
 
             data = {
                 'x_train': x_t,
@@ -138,7 +138,7 @@ class UI(tk.Tk):
             }
 
             # Build the network
-            args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batch_size, 'reg':self.regulization, 'debug':0}
+            args = {'learning_rate':self.learning_rate, 'epoch':self.epoch, 'batch_size':self.batchsize, 'reg':self.regulization, 'debug':0}
             fm = frame(layers, data, args)
 
             for i in xrange(num_run):
